@@ -32,6 +32,8 @@ Matrix transpose(const Matrix &A);
 
 Matrix sigmoid(const Matrix &A);
 
+Matrix softmax(const Matrix &A);
+
 Matrix round(const Matrix &A);
 
 Matrix log(const Matrix &A);

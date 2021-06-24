@@ -125,6 +125,21 @@ Matrix sigmoid(const Matrix &A) {
   return B;
 }
 
+Matrix softmax(const Matrix &A) {
+  auto B = createMatrix(A);
+  for (size_t Row = 0; Row < A.size(); ++Row) {
+    double Total = 0.0;
+    for (size_t Col = 0; Col < A[0].size(); ++Col) {
+      B[Row][Col] = exp(A[Row][Col]);
+      Total += B[Row][Col];
+    }
+    for (size_t Col = 0; Col < A[0].size(); ++Col) {
+      B[Row][Col] /= Total;
+    }
+  }
+  return B;
+}
+
 Matrix round(const Matrix &A) {
   auto B = createMatrix(A);
   for (size_t Row = 0; Row < A.size(); ++Row) {
