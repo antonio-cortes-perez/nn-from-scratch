@@ -38,6 +38,8 @@ Matrix round(const Matrix &A);
 
 Matrix log(const Matrix &A);
 
+void fillRandom(Matrix &A);
+
 } // namespace nn
 
 std::ostream &operator<<(std::ostream &O, const nn::Matrix &M);

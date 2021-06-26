@@ -2,6 +2,8 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 
 namespace nn {
 
@@ -158,6 +160,15 @@ Matrix log(const Matrix &A) {
     }
   }
   return B;
+}
+
+void fillRandom(Matrix &A) {
+  srand(time(NULL));
+  for (size_t Row = 0; Row < A.size(); ++Row) {
+    for (size_t Col = 0; Col < A[0].size(); ++Col) {
+      A[Row][Col] = static_cast<double>(rand()) / RAND_MAX;
+    }
+  }
 }
 
 } // namespace nn
