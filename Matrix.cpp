@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
 
 namespace nn {
 
@@ -169,6 +170,19 @@ void fillRandom(Matrix &A) {
       A[Row][Col] = static_cast<double>(rand()) / RAND_MAX;
     }
   }
+}
+
+void print(const Matrix &A, std::string name, int firstNRows, int firstNCols) {
+  std::cout << name << " (" << A.size() << "," << A[0].size() << ")\n";
+  int Rows = firstNRows == -1 ? A.size() : firstNRows;
+  int Cols = firstNCols == -1 ? A[0].size() : firstNCols;
+  for (size_t Row = 0; Row < Rows; ++Row) {
+    for (size_t Col = 0; Col < Cols; ++Col) {
+      std::cout << A[Row][Col] << " ";
+    }
+    std::cout << "\n";
+  }
+  std::cout << "\n";
 }
 
 } // namespace nn

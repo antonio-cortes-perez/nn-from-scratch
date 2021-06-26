@@ -40,6 +40,8 @@ Matrix log(const Matrix &A);
 
 void fillRandom(Matrix &A);
 
+void print(const Matrix &A, std::string name, int firstNRows, int firstNCols);
+
 } // namespace nn
 
 std::ostream &operator<<(std::ostream &O, const nn::Matrix &M);
