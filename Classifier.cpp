@@ -7,10 +7,15 @@
 #include <utility>
 
 namespace nn {
-Matrix forward(const Matrix &X, const Matrix &W) { return sigmoid(mult(X, W)); }
+std::pair<Matrix, Matrix> forward(const Matrix &X, const Matrix &W1,
+                                  const Matrix &W2) {
+  auto Hidden = sigmoid(mult(X, W1));
+  auto Ypred = softmax(mult(Hidden, W2));
+  return {Ypred, Hidden};
+}
 
-Matrix classify(const Matrix &X, const Matrix &W) {
-  auto Ypred = nn::forward(X, W);
+Matrix classify(const Matrix &X, const Matrix &W1, const Matrix &W2) {
+  auto Ypred = forward(X, W1, W2).first;
   auto Labels = createMatrix(Ypred.size(), 1);
   for (size_t Row = 0; Row < Ypred.size(); ++Row) {
     Labels[Row][0] = std::max_element(Ypred[Row].begin(), Ypred[Row].end()) -
@@ -19,26 +24,39 @@ Matrix classify(const Matrix &X, const Matrix &W) {
   return Labels;
 }
 
-double loss(const Matrix &X, const Matrix &Y, const Matrix &W) {
-  const auto Ypred = forward(X, W);
-  const auto Ones = createMatrix(Y, 1.0);
-  const auto Pos = multElements(Y, log(Ypred));
-  const auto Neg = multElements(sub(Ones, Y), log(sub(Ones, Ypred)));
-  return -sum(add(Pos, Neg)) / X.size();
+double loss(const Matrix &Y, const Matrix &Ypred) {
+  return -sum(multElements(Y, log(Ypred))) / Y.size(); // cross-entropy loss
 }
 
-Matrix gradient(const Matrix &X, const Matrix &Y, const Matrix &W) {
-  return mult(1.0 / X.size(), mult(transpose(X), sub(forward(X, W), Y)));
+std::pair<Matrix, Matrix> backward(const Matrix &X, const Matrix &Y,
+                                   const Matrix &Ypred, const Matrix &W2,
+                                   const Matrix &Hidden) {
+  auto W2Gradient =
+      mult(1.0 / X.size(), mult(transpose(Hidden), sub(Ypred, Y)));
+  auto Ones = createMatrix(Hidden, 1.0);
+  auto W1Gradient =
+      mult(1.0 / X.size(),
+           mult(transpose(X),
+                multElements(mult(sub(Ypred, Y), transpose(W2)),
+                             multElements(Hidden, sub(Ones, Hidden)))));
+  return {W1Gradient, W2Gradient};
 }
 
-Matrix train(const Matrix &X, const Matrix &Y, int Iterations, double LR) {
-  auto W = createMatrix(X[0].size(), Y[0].size());
+std::pair<Matrix, Matrix> train(const Matrix &X, const Matrix &Y,
+                                int NumHiddenNodes, int Iterations, double LR) {
+  auto W1 = createMatrix(X[0].size(), NumHiddenNodes);
+  fillRandom(W1);
+  auto W2 = createMatrix(NumHiddenNodes, Y[0].size());
+  fillRandom(W2);
   for (size_t It = 0; It < Iterations; ++It) {
-    double CurrentLoss = loss(X, Y, W);
+    auto [Ypred, Hidden] = forward(X, W1, W2);
+    auto [W1Gradient, W2Gradient] = backward(X, Y, Ypred, W2, Hidden);
+    double CurrentLoss = loss(Y, Ypred);
     std::cout << "Iteration " << It << " Loss: " << CurrentLoss << "\n";
-    W = sub(W, mult(LR, gradient(X, Y, W)));
+    W1 = sub(W1, mult(LR, W1Gradient));
+    W2 = sub(W2, mult(LR, W2Gradient));
   }
-  return W;
+  return {W1, W2};
 }
 
 void accuracy(const Matrix &Y, const Matrix &Ypred) {
@@ -67,11 +85,11 @@ int main() {
     nn::printImageAndLabel(TrainImages, TrainLabels, Idx);
   }
 
-  const auto W = nn::train(TrainImages, EncodedLabels, 20, 0.00001);
+  auto [W1, W2] = nn::train(TrainImages, EncodedLabels, 128, 100, 0.01);
 
   auto TestImages = nn::readImageFile("t10k-images.idx3-ubyte");
   auto TestLabels = nn::readLabelFile("t10k-labels.idx1-ubyte");
-  nn::accuracy(TestLabels, nn::classify(TestImages, W));
+  nn::accuracy(TestLabels, nn::classify(TestImages, W1, W2));
 
   return 0;
 }
