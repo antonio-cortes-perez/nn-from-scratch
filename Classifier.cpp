@@ -42,19 +42,40 @@ std::pair<Matrix, Matrix> backward(const Matrix &X, const Matrix &Y,
   return {W1Gradient, W2Gradient};
 }
 
+std::vector<Matrix> createBatches(const Matrix &M, int BatchSize) {
+  std::vector<Matrix> Batches;
+  for (size_t Idx = 0; Idx < M.size(); Idx += BatchSize) {
+    auto Batch = createMatrix(BatchSize, M[0].size());
+    for (size_t Row = 0; Row < BatchSize && (Idx + Row) < M.size(); ++Row) {
+      for (size_t Col = 0; Col < M[0].size(); ++Col) {
+        Batch[Row][Col] = M[Idx + Row][Col];
+      }
+    }
+    Batches.push_back(Batch);
+  }
+  return Batches;
+}
+
 std::pair<Matrix, Matrix> train(const Matrix &X, const Matrix &Y,
-                                int NumHiddenNodes, int Iterations, double LR) {
+                                int NumHiddenNodes, int Epochs, int BatchSize,
+                                double LR) {
   auto W1 = createMatrix(X[0].size(), NumHiddenNodes);
   fillRandom(W1);
   auto W2 = createMatrix(NumHiddenNodes, Y[0].size());
   fillRandom(W2);
-  for (size_t It = 0; It < Iterations; ++It) {
-    auto [Ypred, Hidden] = forward(X, W1, W2);
-    auto [W1Gradient, W2Gradient] = backward(X, Y, Ypred, W2, Hidden);
-    double CurrentLoss = loss(Y, Ypred);
-    std::cout << "Iteration " << It << " Loss: " << CurrentLoss << "\n";
-    W1 = sub(W1, mult(LR, W1Gradient));
-    W2 = sub(W2, mult(LR, W2Gradient));
+  auto XBatches = createBatches(X, BatchSize);
+  auto YBatches = createBatches(Y, BatchSize);
+  for (size_t Epoch = 0; Epoch < Epochs; ++Epoch) {
+    for (size_t Batch = 0; Batch < XBatches.size(); ++Batch) {
+      auto [Ypred, Hidden] = forward(XBatches[Batch], W1, W2);
+      auto [W1Gradient, W2Gradient] =
+          backward(XBatches[Batch], YBatches[Batch], Ypred, W2, Hidden);
+      W1 = sub(W1, mult(LR, W1Gradient));
+      W2 = sub(W2, mult(LR, W2Gradient));
+      double CurrentLoss = loss(YBatches[Batch], Ypred);
+      std::cout << "Epoch: " << Epoch << " Batch: " << Batch
+                << " Loss: " << CurrentLoss << "\n";
+    }
   }
   return {W1, W2};
 }
@@ -85,7 +106,7 @@ int main() {
     nn::printImageAndLabel(TrainImages, TrainLabels, Idx);
   }
 
-  auto [W1, W2] = nn::train(TrainImages, EncodedLabels, 128, 100, 0.01);
+  auto [W1, W2] = nn::train(TrainImages, EncodedLabels, 128, 10, 256, 1);
 
   auto TestImages = nn::readImageFile("t10k-images.idx3-ubyte");
   auto TestLabels = nn::readLabelFile("t10k-labels.idx1-ubyte");
