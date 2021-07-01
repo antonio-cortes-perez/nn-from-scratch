@@ -117,7 +117,7 @@ int main() {
     nn::printImageAndLabel(TrainImages, TrainLabels, Idx);
   }
 
-  auto [W1, W2] = nn::train(TrainImages, EncodedLabels, 128, 10, 256, 1);
+  auto [W1, W2] = nn::train(TrainImages, EncodedLabels, 128, 20, 256, 1);
 
   auto TestImages =
       nn::normalizeMnist(nn::readImageFile("t10k-images.idx3-ubyte"));
