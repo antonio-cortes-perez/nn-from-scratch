@@ -167,7 +167,7 @@ void fillRandom(Matrix &A) {
   srand(time(NULL));
   for (size_t Row = 0; Row < A.size(); ++Row) {
     for (size_t Col = 0; Col < A[0].size(); ++Col) {
-      A[Row][Col] = static_cast<double>(rand()) / RAND_MAX;
+      A[Row][Col] = (static_cast<double>(rand()) / RAND_MAX) / A.size();
     }
   }
 }

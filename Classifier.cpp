@@ -96,10 +96,21 @@ Matrix oneHotEncodeMnist(const Matrix &Labels) {
   return Encoded;
 }
 
+Matrix normalizeMnist(const Matrix &M) {
+  auto N = createMatrix(M);
+  for (size_t Row = 0; Row < M.size(); ++Row) {
+    for (size_t Col = 0; Col < M[0].size(); ++Col) {
+      N[Row][Col] = M[Row][Col] / 256;
+    }
+  }
+  return N;
+}
+
 } // namespace nn
 
 int main() {
-  auto TrainImages = nn::readImageFile("train-images.idx3-ubyte");
+  auto TrainImages =
+      nn::normalizeMnist(nn::readImageFile("train-images.idx3-ubyte"));
   auto TrainLabels = nn::readLabelFile("train-labels.idx1-ubyte");
   auto EncodedLabels = nn::oneHotEncodeMnist(TrainLabels);
   for (size_t Idx = 0; Idx < 5; ++Idx) {
@@ -108,7 +119,8 @@ int main() {
 
   auto [W1, W2] = nn::train(TrainImages, EncodedLabels, 128, 10, 256, 1);
 
-  auto TestImages = nn::readImageFile("t10k-images.idx3-ubyte");
+  auto TestImages =
+      nn::normalizeMnist(nn::readImageFile("t10k-images.idx3-ubyte"));
   auto TestLabels = nn::readLabelFile("t10k-labels.idx1-ubyte");
   nn::accuracy(TestLabels, nn::classify(TestImages, W1, W2));
 
