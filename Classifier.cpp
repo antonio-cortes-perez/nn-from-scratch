@@ -109,12 +109,12 @@ Matrix normalizeMnist(const Matrix &M) {
 } // namespace nn
 
 int main() {
-  auto TrainImages =
-      nn::normalizeMnist(nn::readImageFile("train-images.idx3-ubyte"));
+  auto TempImages = nn::readImageFile("train-images.idx3-ubyte");
+  auto TrainImages = nn::normalizeMnist(TempImages);
   auto TrainLabels = nn::readLabelFile("train-labels.idx1-ubyte");
   auto EncodedLabels = nn::oneHotEncodeMnist(TrainLabels);
   for (size_t Idx = 0; Idx < 5; ++Idx) {
-    nn::printImageAndLabel(TrainImages, TrainLabels, Idx);
+    nn::printImageAndLabel(TempImages, TrainLabels, Idx);
   }
 
   auto [W1, W2] = nn::train(TrainImages, EncodedLabels, 128, 20, 256, 1);
