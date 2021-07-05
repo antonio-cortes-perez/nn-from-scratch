@@ -9,6 +9,13 @@
 namespace nn {
 std::pair<Matrix, Matrix> forward(const Matrix &X, const Matrix &W1,
                                   const Matrix &W2) {
+  /*
+   * X(examples,pixels+bias) * W1(pixels+bias,hidden_nodes) =>
+   * Hidden(examples,hidden_nodes)
+   *
+   * Hidden(examples,hidden_nodes) * W2(hidden_nodes,classes) =>
+   * Ypred(examples,classes)
+   */
   auto Hidden = sigmoid(mult(X, W1));
   auto Ypred = softmax(mult(Hidden, W2));
   return {Ypred, Hidden};
@@ -31,9 +38,20 @@ double loss(const Matrix &Y, const Matrix &Ypred) {
 std::pair<Matrix, Matrix> backward(const Matrix &X, const Matrix &Y,
                                    const Matrix &Ypred, const Matrix &W2,
                                    const Matrix &Hidden) {
+  /*
+   * Hidden_T(hidden_nodes,examples) * Ypred-Y(examples,classes) =>
+   * W2'(hidden_nodes,classes)
+   */
   auto W2Gradient =
       mult(1.0 / X.size(), mult(transpose(Hidden), sub(Ypred, Y)));
   auto Ones = createMatrix(Hidden, 1.0);
+  /*
+   * Ypred-Y(examples,classes) * W2_T(classes,hidden_nodes) =>
+   * Temp1(examples,hidden_nodes)
+   *
+   * X_T(pixels+bias,examples) * Temp1(examples,hidden_nodes) =>
+   * W1'(pixels+bias,hidden_nodes)
+   */
   auto W1Gradient =
       mult(1.0 / X.size(),
            mult(transpose(X),
